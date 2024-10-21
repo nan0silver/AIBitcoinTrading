@@ -234,17 +234,11 @@ def capture_chart_image():
         # 3. 스크린샷 찍기 전에 대기
         time.sleep(1)  # 지표 적용 후 기다림
 
-        # 저장할 파일 이름에 현재 날짜와 시간 정보를 추가
-        now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        screenshot_path = f"image/upbit_full_chart_{now}.png"
+        screenshot_png = driver.get_screenshot_as_png()  # 스크린샷을 PNG 바이너리로 얻음
+        encoded_image = base64.b64encode(screenshot_png).decode('utf-8')  # Base64로 인코딩
+        print("screenshot saved")
 
-        # 스크린샷 저장
-        driver.save_screenshot(screenshot_path)
-        print(f"스크린샷 저장 완료: {screenshot_path}")
-
-        # 스크린샷을 Base64로 변환
-        with open(screenshot_path, "rb") as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+        
         return encoded_image
 
     finally:
