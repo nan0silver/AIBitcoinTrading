@@ -1,0 +1,9 @@
+python-dotenv
+openai
+pyupbit
+ta
+selenium
+webdriver-manager
+youtube-transcript-api
+streamlit
+plotly
