@@ -172,13 +172,32 @@ def get_youtube_transcript(video_id):
 
 def capture_chart_image():
 
-    # 크롬 옵션 설정
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # 브라우저를 보이지 않게 실행
+    # ## 로컬용
+    # # 크롬 옵션 설정
+    # chrome_options = Options()
+    # chrome_options.add_argument("--headless")  # 브라우저를 보이지 않게 실행
 
-    # ChromeDriver 설정
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    # # ChromeDriver 설정
+    # service = Service(ChromeDriverManager().install())
+    # driver = webdriver.Chrome(service=service, options=chrome_options)
+
+
+    ## EC2 서버용
+    try:
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")  # 헤드리스 모드 사용
+        # chrome_options.add_argument("--no-sandbox")
+        # chrome_options.add_argument("--disable-dev-shm-usage")
+        # chrome_options.add_argument("--disable-gpu") - 기존코드 가져옴
+
+        service = Service('/usr/bin/chromedriver')  # Specify the path to the ChromeDriver executable
+
+        # Initialize the WebDriver with the specified options
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    except Exception as e:
+        print(f"ChromeDriver 생성 중 오류 발생: {e}")
+        
 
     try:
         # 웹 페이지 열기
@@ -351,10 +370,14 @@ def ai_trading():
     chart_image_base64 = capture_chart_image()
 
     # 7. Fetch YouTube transcript data
-    youtube_transcript = get_youtube_transcript("KSsA92e0GK8")
-    if youtube_transcript:
-        print("YouTube Transcript Data:")
-        print(youtube_transcript)
+    # youtube_transcript = get_youtube_transcript("KSsA92e0GK8")
+    # if youtube_transcript:
+    #     print("YouTube Transcript Data:")
+    #     print(youtube_transcript)
+    f = open("strategy.txt", "r", encoding="utf-8")
+    youtube_transcript = f.read()
+    f.close()
+
 
     # 8. 과거 매매에 대한 reflection 데이터를 가져옴
     past_reflections = fetch_past_reflections()
