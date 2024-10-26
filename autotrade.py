@@ -18,6 +18,10 @@ import base64
 from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi
 import sqlite3  # SQLite for storing trade data
+import schedule
+import time
+
+## ai 스크립트 바꾸고 스케줄표대로 시간 실행 바꿈
 
 
 load_dotenv()
@@ -281,9 +285,9 @@ def get_fear_and_greed_index():
     공포 탐욕 지수를 API로부터 가져오는 함수
     """
     url = "https://api.alternative.me/fng/?limit=1"
-    response = requests.get(url)
-    
-    if response.status_code == 200:
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # HTTP 에러 발생 시 예외 발생
         data = response.json()
         fear_greed_value = data['data'][0]['value']
         fear_greed_classification = data['data'][0]['value_classification']
@@ -291,8 +295,8 @@ def get_fear_and_greed_index():
             'value': fear_greed_value,
             'classification': fear_greed_classification
         }
-    else:
-        print(f"Error fetching Fear and Greed Index: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching Fear and Greed Index: {e}")
         return None
 
 def add_technical_indicators(df):
@@ -396,8 +400,8 @@ def ai_trading():
             - Chart Data (Image)
             - Past Trade Reflections: {past_reflections}
 
-            You must cross-check any signals from the indicators against the strategies outlined in the video transcript. If the indicators suggest one action but the strategies in the video suggest caution, prioritize the video’s advice. Your decision must align with the video’s guidance, ensuring that the trading strategies within the video are applied as closely as possible.
-
+            My main objective is to make money from this trade, so please make a buy or sell decision based on this objective.
+            Keep in mind that it is currently overbought due to the US election. The market may be overheated, but Bitcoin is getting a lot of attention.
             
             Respond in JSON format with three fields: 'decision', 'reason', and 'percentage'. 
             The 'percentage' field should be a number between 0 and 100, 
@@ -508,16 +512,14 @@ def ai_trading():
     # 매매 후 반성 일기 작성
     generate_reflection()
 
+# Define multiple times to run the ai_trading function
+scheduled_times = ["09:00", "14:00", "18:00"]  # 원하는 시간을 추가
 
+# Schedule ai_trading function for each time in scheduled_times
+for scheduled_time in scheduled_times:
+    schedule.every().day.at(scheduled_time).do(ai_trading)
 
-# Main loop
+# Run the scheduler
 while True:
-    try:
-        ai_trading()
-        time.sleep(3600 * 4)  # 4시간마다 실행
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        time.sleep(300)  # 오류 발생 시 5분 후 재시도
-
-
-#ai_trading()
+    schedule.run_pending()
+    time.sleep(60)  # Check every minute if it's time to run the function
