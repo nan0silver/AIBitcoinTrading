@@ -16,6 +16,7 @@ from database import (
     get_all_trades, get_trade_by_id, get_trade_statistics,
     get_portfolio_performance, get_recent_reflections
 )
+from ai_trading_utils import get_ai_trading_decision, execute_trade
 
 app = FastAPI(title="AI Bitcoin Trading Dashboard API")
 
@@ -293,6 +294,87 @@ async def websocket_trades(websocket: WebSocket):
     except Exception as e:
         print(f"WebSocket error: {e}")
         manager.disconnect(websocket)
+
+# ==================== AI 분석 & 수동 거래 엔드포인트 ====================
+
+@app.post("/api/ai-analysis")
+async def request_ai_analysis(include_balance: bool = False):
+    """
+    AI 실시간 분석 요청 (거래 실행하지 않음)
+
+    Args:
+        include_balance: 실제 잔고 정보 포함 여부
+
+    Returns:
+        AI의 의사결정 분석 결과
+    """
+    try:
+        result = get_ai_trading_decision(include_balance=include_balance)
+        return {
+            "success": True,
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/manual-trade")
+async def manual_trade(decision: str, percentage: int):
+    """
+    수동 거래 실행
+
+    Args:
+        decision: 'buy' | 'sell' | 'hold'
+        percentage: 0-100 (자산의 몇 %를 거래할지)
+
+    Returns:
+        거래 실행 결과
+    """
+    try:
+        # 입력 검증
+        if decision not in ['buy', 'sell', 'hold']:
+            raise HTTPException(status_code=400, detail="decision은 'buy', 'sell', 'hold' 중 하나여야 합니다.")
+
+        if not 0 <= percentage <= 100:
+            raise HTTPException(status_code=400, detail="percentage는 0-100 사이의 값이어야 합니다.")
+
+        # 거래 실행
+        result = execute_trade(decision, percentage)
+
+        return {
+            "success": result['success'],
+            "message": result['message'],
+            "order_info": result['order_info']
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/ai-trade")
+async def ai_auto_trade():
+    """
+    AI 분석 + 자동 거래 실행
+    AI의 추천에 따라 자동으로 거래를 실행합니다.
+
+    ⚠️ 주의: 실제 거래가 발생합니다!
+    """
+    try:
+        # 1. AI 분석
+        analysis = get_ai_trading_decision(include_balance=True)
+
+        # 2. 거래 실행
+        trade_result = execute_trade(analysis['decision'], analysis['percentage'])
+
+        # 3. DB에 기록 (선택적)
+        # 여기에 insert_trade() 함수를 호출하여 DB에 저장할 수 있습니다
+
+        return {
+            "success": trade_result['success'],
+            "ai_analysis": analysis,
+            "trade_result": trade_result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

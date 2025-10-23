@@ -7,6 +7,7 @@ import TradeHistory from './components/TradeHistory';
 import TechnicalIndicators from './components/TechnicalIndicators';
 import AIDecisions from './components/AIDecisions';
 import Statistics from './components/Statistics';
+import AITradingPanel from './components/AITradingPanel';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -65,6 +66,11 @@ function App() {
           {/* 시장 정보 카드 */}
           <section>
             <MarketInfo />
+          </section>
+
+          {/* AI 거래 어시스턴트 */}
+          <section>
+            <AITradingPanel />
           </section>
 
           {/* 포트폴리오 & 가격 차트 */}

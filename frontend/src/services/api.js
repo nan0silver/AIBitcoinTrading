@@ -104,4 +104,24 @@ export const connectTradesWebSocket = (onMessage, onError) => {
   return ws;
 };
 
+// AI 분석 및 거래 API
+export const requestAIAnalysis = async (includeBalance = false) => {
+  const response = await api.post('/api/ai-analysis', null, {
+    params: { include_balance: includeBalance }
+  });
+  return response.data;
+};
+
+export const executeManualTrade = async (decision, percentage) => {
+  const response = await api.post('/api/manual-trade', null, {
+    params: { decision, percentage }
+  });
+  return response.data;
+};
+
+export const executeAITrade = async () => {
+  const response = await api.post('/api/ai-trade');
+  return response.data;
+};
+
 export default api;
