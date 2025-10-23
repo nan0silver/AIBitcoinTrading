@@ -30,6 +30,11 @@ export const getPortfolio = async () => {
   return response.data;
 };
 
+export const getLivePortfolio = async () => {
+  const response = await api.get('/api/portfolio/live');
+  return response.data;
+};
+
 export const getMarketData = async () => {
   const response = await api.get('/api/market');
   return response.data;

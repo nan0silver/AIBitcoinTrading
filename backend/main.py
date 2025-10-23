@@ -97,12 +97,73 @@ async def get_statistics():
 
 @app.get("/api/portfolio", response_model=PortfolioPerformance)
 async def get_portfolio():
-    """포트폴리오 성과 조회"""
+    """포트폴리오 성과 조회 (DB 기반)"""
     try:
         performance = get_portfolio_performance()
         return performance
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/portfolio/live")
+async def get_live_portfolio():
+    """실시간 포트폴리오 조회 (Upbit API 직접 호출)"""
+    try:
+        import os
+        access = os.getenv("UPBIT_ACCESS_KEY")
+        secret = os.getenv("UPBIT_SECRET_KEY")
+
+        if not access or not secret:
+            raise HTTPException(status_code=400, detail="Upbit API 키가 설정되지 않았습니다. .env 파일을 확인하세요.")
+
+        upbit = pyupbit.Upbit(access, secret)
+        balances = upbit.get_balances()
+
+        if balances is None:
+            raise HTTPException(status_code=500, detail="잔고 조회에 실패했습니다. API 키를 확인하세요.")
+
+        # BTC, KRW 잔고 추출
+        btc_balance = 0
+        krw_balance = 0
+        btc_avg_buy_price = 0
+
+        for b in balances:
+            if b['currency'] == 'BTC':
+                btc_balance = float(b['balance'])
+                btc_avg_buy_price = float(b['avg_buy_price'])
+            elif b['currency'] == 'KRW':
+                krw_balance = float(b['balance'])
+
+        # 현재 BTC 가격
+        current_btc_price = pyupbit.get_current_price("KRW-BTC")
+
+        # 총 자산 (KRW 기준)
+        total_value = krw_balance + (btc_balance * current_btc_price)
+
+        # 손익 계산 (평균 매입가 기준)
+        if btc_balance > 0 and btc_avg_buy_price > 0:
+            btc_value_at_buy = btc_balance * btc_avg_buy_price
+            btc_value_now = btc_balance * current_btc_price
+            btc_profit_loss = btc_value_now - btc_value_at_buy
+            btc_profit_loss_pct = (btc_profit_loss / btc_value_at_buy * 100) if btc_value_at_buy > 0 else 0
+        else:
+            btc_profit_loss = 0
+            btc_profit_loss_pct = 0
+
+        return {
+            "current_btc_balance": btc_balance,
+            "current_krw_balance": krw_balance,
+            "btc_avg_buy_price": btc_avg_buy_price,
+            "current_btc_price": current_btc_price,
+            "total_value_krw": total_value,
+            "initial_value_krw": krw_balance + (btc_balance * btc_avg_buy_price),
+            "profit_loss": btc_profit_loss,
+            "profit_loss_percentage": btc_profit_loss_pct,
+            "is_live": True  # 실시간 데이터 표시
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"실시간 포트폴리오 조회 실패: {str(e)}")
 
 @app.get("/api/market", response_model=MarketData)
 async def get_market_data():

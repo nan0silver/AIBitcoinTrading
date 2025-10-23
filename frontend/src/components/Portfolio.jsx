@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Wallet, TrendingUp, Bitcoin, DollarSign } from 'lucide-react';
-import { getPortfolio } from '../services/api';
+import { Wallet, TrendingUp, Bitcoin, DollarSign, RefreshCw } from 'lucide-react';
+import { getLivePortfolio } from '../services/api';
 
 const Portfolio = () => {
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
-        const data = await getPortfolio();
+        const data = await getLivePortfolio();
         setPortfolio(data);
+        setIsLive(data.is_live || false);
         setLoading(false);
       } catch (error) {
         console.error('Failed to fetch portfolio:', error);
@@ -65,10 +67,18 @@ const Portfolio = () => {
 
   return (
     <div className="card">
-      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-white">
-        <Wallet className="w-6 h-6 text-blue-500" />
-        포트폴리오
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+          <Wallet className="w-6 h-6 text-blue-500" />
+          포트폴리오
+        </h2>
+        {isLive && (
+          <div className="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-semibold">
+            <RefreshCw className="w-3 h-3 animate-spin" />
+            실시간 Upbit 데이터
+          </div>
+        )}
+      </div>
 
       {/* 총 자산 */}
       <div className="mb-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
