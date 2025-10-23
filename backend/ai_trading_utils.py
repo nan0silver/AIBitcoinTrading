@@ -159,6 +159,10 @@ def get_ai_trading_decision(include_balance: bool = False) -> Dict:
                 print(f"잔고 조회 실패: {e}")
 
         # 7. AI 프롬프트 구성
+        # 헬퍼 함수: 숫자를 포맷팅하거나 'N/A' 반환
+        def format_value(val):
+            return f"{val:,.0f}" if val is not None else "N/A"
+
         prompt = f"""
 당신은 비트코인 투자 전문가입니다. 아래 데이터를 분석하여 투자 결정을 내려주세요.
 
@@ -167,14 +171,14 @@ def get_ai_trading_decision(include_balance: bool = False) -> Dict:
 - 공포-탐욕 지수: {fear_greed['value'] if fear_greed else 'N/A'} ({fear_greed['classification'] if fear_greed else 'N/A'})
 
 ## 기술적 지표
-- RSI (14): {indicators.get('rsi', 'N/A')}
-- MACD: {indicators.get('macd', 'N/A')}
-- MACD Signal: {indicators.get('macd_signal', 'N/A')}
-- 볼린저 밴드 상단: {indicators.get('bb_upper', 'N/A'):,.0f if indicators.get('bb_upper') else 'N/A'}
-- 볼린저 밴드 중간: {indicators.get('bb_middle', 'N/A'):,.0f if indicators.get('bb_middle') else 'N/A'}
-- 볼린저 밴드 하단: {indicators.get('bb_lower', 'N/A'):,.0f if indicators.get('bb_lower') else 'N/A'}
-- SMA (20일): {indicators.get('sma_20', 'N/A'):,.0f if indicators.get('sma_20') else 'N/A'}
-- EMA (12일): {indicators.get('ema_12', 'N/A'):,.0f if indicators.get('ema_12') else 'N/A'}
+- RSI (14): {format_value(indicators.get('rsi'))}
+- MACD: {format_value(indicators.get('macd'))}
+- MACD Signal: {format_value(indicators.get('macd_signal'))}
+- 볼린저 밴드 상단: {format_value(indicators.get('bb_upper'))}
+- 볼린저 밴드 중간: {format_value(indicators.get('bb_middle'))}
+- 볼린저 밴드 하단: {format_value(indicators.get('bb_lower'))}
+- SMA (20일): {format_value(indicators.get('sma_20'))}
+- EMA (12일): {format_value(indicators.get('ema_12'))}
 
 ## 최신 뉴스
 {news}
